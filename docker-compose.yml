@@ -1,0 +1,41 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: minipay
+      POSTGRES_USER: minipay
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U minipay -d minipay"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  api:
+    build:
+      context: .
+      dockerfile: kubernetes/Dockerfile.api
+    environment:
+      DATABASE_URL: postgresql+psycopg://minipay:${DB_PASSWORD:?DB_PASSWORD must be set}@db:5432/minipay
+      MINIPAY_API_KEY: ${MINIPAY_API_KEY:?MINIPAY_API_KEY must be set}
+    depends_on:
+      db:
+        condition: service_healthy
+    ports: ["8000:8000"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2)"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+  ui:
+    build:
+      context: .
+      dockerfile: kubernetes/Dockerfile.ui
+    depends_on:
+      api:
+        condition: service_healthy
+    ports: ["8080:80"]
+volumes:
+  pgdata:

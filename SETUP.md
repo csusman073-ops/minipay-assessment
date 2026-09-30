@@ -1,4 +1,3 @@
-[SETUP.md](https://github.com/user-attachments/files/32855577/SETUP.md)
 # Setup
 
 ## Local API

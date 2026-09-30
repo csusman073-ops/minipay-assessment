@@ -1,4 +1,3 @@
-[Uploading ARCHITECTURE.md…]()
 # Architecture
 
 MiniPay has three layers.
